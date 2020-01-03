@@ -1,7 +1,8 @@
-//  BLAKE2 - size-optimized implementations
+//  BLAKE2 - size-optimized implementation
 //
 //  Copyright 2012, Samuel Neves <sneves@dei.uc.pt> (original work)
 //  Copyright 2018, Ayke van Laethem
+//  Copyright 2020, Cameron Martens
 //
 //  You may use this under the terms of the CC0, the OpenSSL Licence, or
 //  the Apache Public License 2.0, at your option. The terms of these
@@ -12,21 +13,17 @@
 //  - Apache 2.0        : http://www.apache.org/licenses/LICENSE-2.0
 //
 //  More information about the BLAKE2 hash function can be found at
-//  https://blake2.net.
+//  https://blake2.net
 
-#include <stdint.h>
 #include <string.h>
-#include <stdio.h>
-
 #include "blake2s.h"
 
 static const uint32_t blake2s_IV[8] = {
     0x6A09E667UL, 0xBB67AE85UL, 0x3C6EF372UL, 0xA54FF53AUL,
-    0x510E527FUL, 0x9B05688CUL, 0x1F83D9ABUL, 0x5BE0CD19UL
+    0x510E527FUL, 0x9B05688CUL, 0x1F83D9ABUL, 0x5BE0CD19UL,
 };
 
-// These are the permutations. It packs two permutations per byte, see the
-// first row.
+//These are the permutations, packed two per byte
 static const uint8_t blake2s_sigma[10][8] = {
     { 0x01, 0x23, 0x45, 0x67, 0x89, 0xab, 0xcd, 0xef },
     { 0xea, 0x48, 0x9f, 0xd6, 0x1c, 0x02, 0xb7, 0x53 },
@@ -40,17 +37,18 @@ static const uint8_t blake2s_sigma[10][8] = {
     { 0xa2, 0x84, 0x76, 0x15, 0xfb, 0x9e, 0x3c, 0xd0 },
 };
 
-// Rotate right by the given amount.
+//Rotate right by the given amount
 static inline uint32_t rotr32(const uint32_t w, const unsigned c) {
-    return ( w >> c ) | ( w << ( 32 - c ) );
+    return (w >> c) | (w << (32 - c));
 }
 
-// blake2s initialization without key
+//Blake2s initialization without key
 void blake2s_init(blake2s_state *S) {
+    //Clear state
     memset(S, 0, sizeof(blake2s_state));
+    //Fill initialization vector
     memcpy(S->h, blake2s_IV, 8 * sizeof(S->h[0]));
-
-    // set depth, fanout and digest length
+    //Set depth, fanout and digest length
     S->h[0] ^= (1UL << 24) | (1UL << 16) | BLAKE2S_OUTLEN;
 }
 
@@ -58,7 +56,7 @@ static void blake2s_round(size_t r, const uint32_t m[16], uint32_t v[16]) {
     for (size_t i = 0; i < 8; i++) {
         size_t bit4 = i / 4; // 0, 0, 0, 0, 1, 1, 1, 1
 
-        // Calculate the following table dynamically:
+        //Calculate the following table dynamically:
         //   a:    b:    c:     d:
         //   v[0]  v[4]  v[ 8]  v[12]
         //   v[1]  v[5]  v[ 9]  v[13]
@@ -71,7 +69,7 @@ static void blake2s_round(size_t r, const uint32_t m[16], uint32_t v[16]) {
         uint32_t *a = &v[(i + bit4 * 0) % 4 + 0];
         uint32_t *b = &v[(i + bit4 * 1) % 4 + 4];
         uint32_t *c = &v[(i + bit4 * 2) % 4 + 8];
-        uint32_t *d = &v[(i + bit4 * 2 + bit4) % 4 + 12];
+        uint32_t *d = &v[(i + bit4 * 3) % 4 + 12];
 
         const uint8_t sigma = blake2s_sigma[r][i];
         uint32_t m1 = m[sigma >> 4];
@@ -90,50 +88,55 @@ static void blake2s_round(size_t r, const uint32_t m[16], uint32_t v[16]) {
 
 static void blake2s_compress(blake2s_state *S) {
     const uint32_t *m = (const uint32_t*)S->buf;
-
     uint32_t v[16];
+    //Initialize work variables
     memcpy(v, S->h, 8 * sizeof(v[0]));
     memcpy(v + 8, blake2s_IV, 8 * sizeof(v[0]));
-
     v[12] ^= S->t[0];
     #if BLAKE2S_64BIT
     v[13] ^= S->t[1];
     #endif
     v[14] ^= S->f0;
-
+    //Ten rounds of message mixing
     for (size_t r = 0; r < 10; r++) {
         blake2s_round(r, m, v);
     }
-
+    //Mix message into state vector
     for (size_t i = 0; i < 8; i++) {
-        S->h[i] = S->h[i] ^ v[i] ^ v[i + 8];
+        S->h[i] ^= v[i] ^ v[i + 8];
     }
 }
 
 void blake2s_update(blake2s_state *S, const void *in, size_t inlen) {
     for (size_t i = 0; i < inlen; i++) {
         if (S->buflen == BLAKE2S_BLOCKBYTES) {
+            //Buffer is full, increase counter
             #if BLAKE2S_64BIT
             S->T += BLAKE2S_BLOCKBYTES;
             #else
             S->t[0] += BLAKE2S_BLOCKBYTES;
             #endif
+            //Non-final block
             blake2s_compress(S);
             S->buflen = 0;
         }
+        //Copy into buffer
         S->buf[S->buflen++] = ((uint8_t*)in)[i];
     }
 }
 
 void blake2s_final(blake2s_state *S, void *out) {
+    //Increase counter
     #if BLAKE2S_64BIT
     S->T += S->buflen;
     #else
     S->t[0] += S->buflen;
     #endif
+    //Zero padding
+    memset(S->buf + S->buflen, 0, BLAKE2S_BLOCKBYTES - S->buflen);
+    //Final block, flag is all ones
     S->f0 = (uint32_t)-1;
-    memset(S->buf + S->buflen, 0, BLAKE2S_BLOCKBYTES - S->buflen); // Padding
     blake2s_compress(S);
-
+    //Copy output to user buffer
     memcpy(out, S->h, BLAKE2S_OUTLEN);
 }

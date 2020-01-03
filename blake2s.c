@@ -52,6 +52,21 @@ void blake2s_init(blake2s_state *S) {
     S->h[0] ^= (1UL << 24) | (1UL << 16) | BLAKE2S_OUTLEN;
 }
 
+#if BLAKE2S_KEYED
+//Blake2s initialization with key (keylen must be > 0)
+void blake2s_init_key(blake2s_state *S, const void *key, size_t keylen) {
+    //Initialize without key
+    blake2s_init(S);
+    //Set key length
+    S->h[0] ^= (keylen << 8);
+    //Process key data
+    uint8_t key_block[BLAKE2S_BLOCKBYTES];
+    memset(key_block, 0, BLAKE2S_BLOCKBYTES);
+    memcpy(key_block, key, keylen);
+    blake2s_update(S, key_block, BLAKE2S_BLOCKBYTES);
+}
+#endif
+
 static void blake2s_round(size_t r, const uint32_t m[16], uint32_t v[16]) {
     for (size_t i = 0; i < 8; i++) {
         size_t bit4 = i / 4; // 0, 0, 0, 0, 1, 1, 1, 1
@@ -107,6 +122,7 @@ static void blake2s_compress(blake2s_state *S) {
     }
 }
 
+//Update hash with input data (inlen >= 0)
 void blake2s_update(blake2s_state *S, const void *in, size_t inlen) {
     for (size_t i = 0; i < inlen; i++) {
         if (S->buflen == BLAKE2S_BLOCKBYTES) {
@@ -125,6 +141,7 @@ void blake2s_update(blake2s_state *S, const void *in, size_t inlen) {
     }
 }
 
+//Finalize and output hash (only call this once)
 void blake2s_final(blake2s_state *S, void *out) {
     //Increase counter
     #if BLAKE2S_64BIT

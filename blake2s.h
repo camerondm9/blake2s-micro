@@ -24,13 +24,14 @@
 extern "C" {
 #endif
 
-// Fixed constant that cannot be changed.
+//Fixed constant that cannot be changed.
 #define BLAKE2S_BLOCKBYTES (64)
 
-// Options that can be set depending on application needs.
-// Except for BLAKE2S_OUTLEN, disabling features will improve code size.
-#define BLAKE2S_OUTLEN    (32) // Length of digest (32 is the secure/maximum/standard length)
-#define BLAKE2S_64BIT     (0)  // Input length may be 4GB or larger (64-bit systems only).
+//Options that can be set depending on application needs.
+//Except for BLAKE2S_OUTLEN, disabling features will improve code size.
+#define BLAKE2S_OUTLEN    (32)  //Length of digest (32 is the secure/maximum/standard length)
+#define BLAKE2S_64BIT     (0)   //Input length may be 4GB or larger (64-bit systems only).
+#define BLAKE2S_KEYED     (1)   //Support for keyed hashing
 
 typedef struct {
     uint32_t h[8];
@@ -43,9 +44,12 @@ typedef struct {
     uint8_t  buf[BLAKE2S_BLOCKBYTES];
 } blake2s_state;
 
-// Simple API.
-// See the options above for the applicable restrictions.
+//API. See the options above for the applicable restrictions.
+
 void blake2s_init(blake2s_state *S);
+#if BLAKE2S_KEYED
+void blake2s_init_key(blake2s_state *S, const void *key, size_t keylen);
+#endif
 void blake2s_update(blake2s_state *S, const void *in, size_t inlen);
 void blake2s_final(blake2s_state *S, void *out);
 

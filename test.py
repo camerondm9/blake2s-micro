@@ -12,8 +12,9 @@ def test(path):
         if case['hash'] != 'blake2s':
             continue
         if case['key']:
-            continue
-        call = subprocess.run(['build/test', case['in']], stdout=subprocess.PIPE)
+            call = subprocess.run(['build/test', case['key'] + ':' + case['in']], stdout=subprocess.PIPE)
+        else:
+            call = subprocess.run(['build/test', case['in']], stdout=subprocess.PIPE)
         out = call.stdout.decode('utf-8').strip()
         if out.startswith('skip:'):
             skip += 1

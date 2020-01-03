@@ -19,11 +19,7 @@
 #include <stdlib.h>
 #include "blake2s.h"
 
-__attribute__((aligned(4)))
-const uint8_t data1[BLAKE2S_BLOCKBYTES + 1] = "The quick brown fox jumps over the lazy dog";
-
-__attribute__((aligned(4)))
-const uint8_t data2[] = "The quick brown fox jumps over the lazy dog";
+const uint8_t data[] = "The quick brown fox jumps over the lazy dog";
 
 void test(const uint8_t *data, size_t len) {
     unsigned char result[32];
@@ -39,21 +35,54 @@ void test(const uint8_t *data, size_t len) {
     printf("\n");
 }
 
+void test_key(const uint8_t *key, size_t len_key, const uint8_t *data, size_t len_data) {
+    unsigned char result[32];
+
+    blake2s_state S;
+    blake2s_init_key(&S, key, len_key);
+    blake2s_update(&S, data, len_data);
+    blake2s_final(&S, &result);
+
+    for (size_t i = 0; i < sizeof(result); i++) {
+        printf("%02x", result[i]);
+    }
+    printf("\n");
+}
+
 int main(int argc, char **argv) {
     if (argc > 1) {
         for (size_t i = 1; i < argc; i++) {
-            size_t len = strlen(argv[i]) / 2;
-            // Read hex-encoded data
-            uint8_t *buf = malloc(len);
-            for (size_t j = 0; j < len; j++) {
-                sscanf(&argv[i][j*2], "%2hhx", &buf[j]);
-            };
-            test(buf, len);
-            free(buf);
+            char *colon = strchr(argv[i], ':');
+            if (colon == NULL) {
+                size_t len = strlen(argv[i]) / 2;
+                //Read hex-encoded data
+                uint8_t *buf = malloc(len);
+                for (size_t j = 0; j < len; j++) {
+                    sscanf(&argv[i][j*2], "%2hhx", &buf[j]);
+                };
+                test(buf, len);
+                free(buf);
+            } else {
+                //Replace colon with null to split the string
+                *colon++ = 0;
+                size_t len_key = strlen(argv[i]) / 2;
+                size_t len_data = strlen(colon) / 2;
+                //Read hex-encoded data
+                uint8_t *buf_key = malloc(len_key);
+                for (size_t j = 0; j < len_key; j++) {
+                    sscanf(&argv[i][j*2], "%2hhx", &buf_key[j]);
+                };
+                uint8_t *buf_data = malloc(len_data);
+                for (size_t j = 0; j < len_data; j++) {
+                    sscanf(&colon[j*2], "%2hhx", &buf_data[j]);
+                };
+                test_key(buf_key, len_key, buf_data, len_data);
+                free(buf_data);
+                free(buf_key);
+            }
         }
     } else {
-        test(data1, sizeof(data1) - 1);
-        test(data2, sizeof(data2) - 1);
+        test(data, sizeof(data) - 1);
         test(NULL, 0);
     }
 }

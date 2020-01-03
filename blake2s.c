@@ -88,8 +88,8 @@ static void blake2s_round(size_t r, const uint32_t m[16], uint32_t v[16]) {
     }
 }
 
-static void blake2s_compress(blake2s_state *S, const uint8_t in[BLAKE2S_BLOCKBYTES]) {
-    const uint32_t *m = (const uint32_t*)in;
+static void blake2s_compress(blake2s_state *S) {
+    const uint32_t *m = (const uint32_t*)S->buf;
 
     uint32_t v[16];
     memcpy(v, S->h, 8 * sizeof(v[0]));
@@ -118,7 +118,7 @@ void blake2s_update(blake2s_state *S, const void *in, size_t inlen) {
             #else
             S->t[0] += BLAKE2S_BLOCKBYTES;
             #endif
-            blake2s_compress(S, S->buf);
+            blake2s_compress(S);
             S->buflen = 0;
         }
         S->buf[S->buflen++] = ((uint8_t*)in)[i];
@@ -133,7 +133,7 @@ void blake2s_final(blake2s_state *S, void *out) {
     #endif
     S->f0 = (uint32_t)-1;
     memset(S->buf + S->buflen, 0, BLAKE2S_BLOCKBYTES - S->buflen); // Padding
-    blake2s_compress(S, S->buf);
+    blake2s_compress(S);
 
     memcpy(out, S->h, BLAKE2S_OUTLEN);
 }

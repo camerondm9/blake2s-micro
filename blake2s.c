@@ -60,17 +60,10 @@ static void blake2s_increment_counter(blake2s_state *S, const size_t inc) {
     }
 }
 
-static void blake2s_set_IV(uint32_t *buf) {
-    for (size_t i = 0; i < 8; i++) {
-        buf[i] = blake2s_IV[i];
-    }
-}
-
 // blake2s initialization without key
 int blake2s_init(blake2s_state *S) {
     memset(S, 0, sizeof(blake2s_state));
-
-    blake2s_set_IV(S->h);
+    memcpy(S->h, blake2s_IV, 8 * sizeof(S->h[0]));
 
     // set depth, fanout and digest length
     S->h[0] ^= (1UL << 24) | (1UL << 16) | BLAKE2S_OUTLEN;
@@ -117,8 +110,8 @@ static void blake2s_compress(blake2s_state *S, const uint8_t in[BLAKE2S_BLOCKBYT
 
     uint32_t v[16];
     memcpy(v, S->h, 8 * sizeof(v[0]));
+    memcpy(v + 8, blake2s_IV, 8 * sizeof(v[0]));
 
-    blake2s_set_IV(&v[8]);
     v[12] ^= S->t[0];
     v[13] ^= S->t[1];
     v[14] ^= S->f[0];

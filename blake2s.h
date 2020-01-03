@@ -29,7 +29,6 @@ extern "C" {
 // Options that can be set depending on application needs.
 // Except for BLAKE2S_OUTLEN, disabling features will improve code size.
 #define BLAKE2S_OUTLEN    (32) // Length of digest (32 is the secure/maximum/standard length)
-#define BLAKE2S_ERRCHECK  (0)  // Enable error checking
 #define BLAKE2S_64BIT     (0)  // Input length may be 4GB or larger (64-bit systems only).
 
 typedef struct {
@@ -43,9 +42,9 @@ typedef struct {
 
 // Simple API.
 // See the options above for the applicable restrictions.
-int blake2s_init(blake2s_state *S);
-int blake2s_update(blake2s_state *S, const void *in, size_t inlen);
-int blake2s_final(blake2s_state *S, void *out);
+void blake2s_init(blake2s_state *S);
+void blake2s_update(blake2s_state *S, const void *in, size_t inlen);
+void blake2s_final(blake2s_state *S, void *out);
 
 #if defined(__cplusplus)
 }

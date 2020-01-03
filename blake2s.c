@@ -45,10 +45,6 @@ static inline uint32_t rotr32(const uint32_t w, const unsigned c) {
     return ( w >> c ) | ( w << ( 32 - c ) );
 }
 
-static int blake2s_is_lastblock(const blake2s_state *S) {
-    return S->f[0] != 0;
-}
-
 static void blake2s_set_lastblock(blake2s_state *S) {
     S->f[0] = (uint32_t)-1;
 }
@@ -61,14 +57,12 @@ static void blake2s_increment_counter(blake2s_state *S, const size_t inc) {
 }
 
 // blake2s initialization without key
-int blake2s_init(blake2s_state *S) {
+void blake2s_init(blake2s_state *S) {
     memset(S, 0, sizeof(blake2s_state));
     memcpy(S->h, blake2s_IV, 8 * sizeof(S->h[0]));
 
     // set depth, fanout and digest length
     S->h[0] ^= (1UL << 24) | (1UL << 16) | BLAKE2S_OUTLEN;
-
-    return 0;
 }
 
 static void blake2s_round(size_t r, const uint32_t m[16], uint32_t v[16]) {
@@ -126,7 +120,7 @@ static void blake2s_compress(blake2s_state *S, const uint8_t in[BLAKE2S_BLOCKBYT
     }
 }
 
-int blake2s_update(blake2s_state *S, const void *in, size_t inlen) {
+void blake2s_update(blake2s_state *S, const void *in, size_t inlen) {
     for (size_t i = 0; i < inlen; i++) {
         if (S->buflen == BLAKE2S_BLOCKBYTES) {
             blake2s_increment_counter(S, BLAKE2S_BLOCKBYTES);
@@ -135,17 +129,13 @@ int blake2s_update(blake2s_state *S, const void *in, size_t inlen) {
         }
         S->buf[S->buflen++] = ((uint8_t*)in)[i];
     }
-    return 0;
 }
 
-int blake2s_final(blake2s_state *S, void *out) {
-    if (BLAKE2S_ERRCHECK && blake2s_is_lastblock(S)) return -1;
-
+void blake2s_final(blake2s_state *S, void *out) {
     blake2s_increment_counter(S, S->buflen);
     blake2s_set_lastblock(S);
     memset(S->buf + S->buflen, 0, BLAKE2S_BLOCKBYTES - S->buflen); // Padding
     blake2s_compress(S, S->buf);
 
     memcpy(out, S->h, BLAKE2S_OUTLEN);
-    return 0;
 }

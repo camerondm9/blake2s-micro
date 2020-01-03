@@ -6,7 +6,7 @@
 MEMORY
 {
   FLASH_TEXT (rx):  ORIGIN = 0,          LENGTH = 4K
-  RAM        (rwx): ORIGIN = 0x20000000, LENGTH = 4K
+  RAM        (rw):  ORIGIN = 0x20000000, LENGTH = 4K
 }
 
 SECTIONS
@@ -15,6 +15,10 @@ SECTIONS
   {
     *(.text)
     *(.text*)
+  } >FLASH_TEXT
+
+  .rodata :
+  {
     *(.rodata)
     *(.rodata*)
   } >FLASH_TEXT

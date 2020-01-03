@@ -1,10 +1,11 @@
 
-CFLAGS = -Wall -Werror -Os -flto -g -std=c99 -fno-unroll-loops
-CFLAGS_ARM = $(CFLAGS) -mcpu=cortex-m0 -mthumb -Wl,--gc-sections -nostdlib -T test-mcu.ld -e blake2s_blocks
+CFLAGS_COMMON = -Wall -Werror -Os -std=c99 -fno-unroll-loops
+CFLAGS = $(CFLAGS_COMMON) -g
+CFLAGS_ARM = $(CFLAGS_COMMON) -mthumb -nostdlib -T test-mcu.ld
 
 .PHONY: all run clean
 
-all: build/test build/sizetest
+all: build/test build/sizetest_m0 build/sizetest_m4
 
 run: build/test
 	@$<
@@ -19,12 +20,12 @@ build/test: blake2s.c test.c
 	@mkdir -p build
 	$(CC) $(CFLAGS) -DDEBUG -o $@ $^
 
-build/sizetest: blake2s.c test-stdlib.c
+build/sizetest_m0: blake2s.c test-stdlib.c test-mcu.c
 	@mkdir -p build
-	@arm-none-eabi-gcc $(CFLAGS_ARM) -o $@ $^
+	@arm-none-eabi-gcc $(CFLAGS_ARM) -mcpu=cortex-m0 -o $@ $^
 	@arm-none-eabi-size $@
 
-build/sizetest-noinline: blake2s.c test-stdlib.c
+build/sizetest_m4: blake2s.c test-stdlib.c test-mcu.c
 	@mkdir -p build
-	@arm-none-eabi-gcc $(CFLAGS_ARM) -fno-inline -o $@ $^
+	@arm-none-eabi-gcc $(CFLAGS_ARM) -mcpu=cortex-m4 -o $@ $^
 	@arm-none-eabi-size $@

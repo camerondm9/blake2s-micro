@@ -46,7 +46,7 @@ static inline uint32_t rotr32(const uint32_t w, const unsigned c) {
 }
 
 static void blake2s_set_lastblock(blake2s_state *S) {
-    S->f[0] = (uint32_t)-1;
+    S->f0 = (uint32_t)-1;
 }
 
 static void blake2s_increment_counter(blake2s_state *S, const size_t inc) {
@@ -108,8 +108,7 @@ static void blake2s_compress(blake2s_state *S, const uint8_t in[BLAKE2S_BLOCKBYT
 
     v[12] ^= S->t[0];
     v[13] ^= S->t[1];
-    v[14] ^= S->f[0];
-    v[15] ^= S->f[1];
+    v[14] ^= S->f0;
 
     for (size_t r = 0; r < 10; r++) {
         blake2s_round(r, m, v);

@@ -33,7 +33,10 @@ extern "C" {
 
 typedef struct {
   uint32_t h[8];
-  uint32_t t[2];
+  union {
+    uint32_t t[2];
+    uint64_t T;
+  };
   uint32_t f0;
   uint32_t buflen;
   uint8_t  buf[BLAKE2S_BLOCKBYTES];

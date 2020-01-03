@@ -50,10 +50,11 @@ static void blake2s_set_lastblock(blake2s_state *S) {
 }
 
 static void blake2s_increment_counter(blake2s_state *S, const size_t inc) {
+    #if BLAKE2S_64BIT
+    S->T += inc;
+    #else
     S->t[0] += inc;
-    if (BLAKE2S_64BIT) {
-        S->t[1] += ( S->t[0] < inc );
-    }
+    #endif
 }
 
 // blake2s initialization without key
@@ -107,7 +108,9 @@ static void blake2s_compress(blake2s_state *S, const uint8_t in[BLAKE2S_BLOCKBYT
     memcpy(v + 8, blake2s_IV, 8 * sizeof(v[0]));
 
     v[12] ^= S->t[0];
+    #if BLAKE2S_64BIT
     v[13] ^= S->t[1];
+    #endif
     v[14] ^= S->f0;
 
     for (size_t r = 0; r < 10; r++) {

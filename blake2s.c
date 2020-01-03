@@ -138,27 +138,15 @@ static void blake2s_compress(blake2s_state *S, const uint8_t in[BLAKE2S_BLOCKBYT
     }
 }
 
-int blake2s_update(blake2s_state *S, const void *pin, size_t inlen) {
-    if (inlen == 0) return 0; // nothing to do
-
-    const uint8_t * in = (const uint8_t *)pin;
-    size_t left = S->buflen;
-    size_t fill = BLAKE2S_BLOCKBYTES - left;
-    if (inlen > fill) {
-        S->buflen = 0;
-        memcpy(S->buf + left, in, fill); // Fill buffer
-        blake2s_increment_counter(S, BLAKE2S_BLOCKBYTES);
-        blake2s_compress(S, S->buf);
-        in += fill; inlen -= fill;
-        while (inlen > BLAKE2S_BLOCKBYTES) {
+int blake2s_update(blake2s_state *S, const void *in, size_t inlen) {
+    for (size_t i = 0; i < inlen; i++) {
+        if (S->buflen == BLAKE2S_BLOCKBYTES) {
             blake2s_increment_counter(S, BLAKE2S_BLOCKBYTES);
-            blake2s_compress(S, in);
-            in += BLAKE2S_BLOCKBYTES;
-            inlen -= BLAKE2S_BLOCKBYTES;
+            blake2s_compress(S, S->buf);
+            S->buflen = 0;
         }
+        S->buf[S->buflen++] = ((uint8_t*)in)[i];
     }
-    memcpy(S->buf + S->buflen, in, inlen);
-    S->buflen += inlen;
     return 0;
 }
 

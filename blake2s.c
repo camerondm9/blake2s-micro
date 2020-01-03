@@ -141,10 +141,6 @@ static void blake2s_compress(blake2s_state *S, const uint8_t in[BLAKE2S_BLOCKBYT
 int blake2s_update(blake2s_state *S, const void *pin, size_t inlen) {
     if (inlen == 0) return 0; // nothing to do
 
-    if (BLAKE2S_ERRCHECK && !BLAKE2S_STREAM) {
-        return -1;
-    }
-
     const uint8_t * in = (const uint8_t *)pin;
     size_t left = S->buflen;
     size_t fill = BLAKE2S_BLOCKBYTES - left;
@@ -167,14 +163,12 @@ int blake2s_update(blake2s_state *S, const void *pin, size_t inlen) {
 }
 
 int blake2s_final(blake2s_state *S, void *out) {
-    if (BLAKE2S_ERRCHECK && BLAKE2S_STREAM && blake2s_is_lastblock(S)) return -1;
+    if (BLAKE2S_ERRCHECK && blake2s_is_lastblock(S)) return -1;
 
-    if (BLAKE2S_STREAM) {
-        blake2s_increment_counter(S, S->buflen);
-        blake2s_set_lastblock(S);
-        memset(S->buf + S->buflen, 0, BLAKE2S_BLOCKBYTES - S->buflen); // Padding
-        blake2s_compress(S, S->buf);
-    }
+    blake2s_increment_counter(S, S->buflen);
+    blake2s_set_lastblock(S);
+    memset(S->buf + S->buflen, 0, BLAKE2S_BLOCKBYTES - S->buflen); // Padding
+    blake2s_compress(S, S->buf);
 
     memcpy(out, S->h, BLAKE2S_OUTLEN);
     return 0;

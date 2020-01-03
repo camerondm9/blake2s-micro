@@ -43,15 +43,6 @@ int main(int argc, char **argv) {
     if (argc > 1) {
         for (size_t i = 1; i < argc; i++) {
             size_t len = strlen(argv[i]) / 2;
-            if (!BLAKE2S_STREAM && len % BLAKE2S_BLOCKBYTES != 0) {
-                printf("skip: inputs must be block aligned\n");
-                continue;
-            }
-            if (!BLAKE2S_STREAM && len == 0) {
-                printf("skip: input is zero-length\n");
-                continue;
-            }
-
             // Read hex-encoded data
             uint8_t *buf = malloc(len);
             for (size_t j = 0; j < len; j++) {
@@ -62,11 +53,7 @@ int main(int argc, char **argv) {
         }
     } else {
         test(data1, sizeof(data1) - 1);
-        if (BLAKE2S_STREAM) {
-            test(data2, sizeof(data2) - 1);
-        }
-        if (BLAKE2S_STREAM) {
-            test(NULL, 0);
-        }
+        test(data2, sizeof(data2) - 1);
+        test(NULL, 0);
     }
 }

@@ -30,7 +30,6 @@ extern "C" {
 // Except for BLAKE2S_OUTLEN, disabling features will improve code size.
 #define BLAKE2S_OUTLEN    (32) // Length of digest (32 is the secure/maximum/standard length)
 #define BLAKE2S_ERRCHECK  (0)  // Enable error checking
-#define BLAKE2S_UNALIGNED (0)  // Unaligned inputs are accepted.
 #define BLAKE2S_64BIT     (0)  // Input length may be 4GB or larger (64-bit systems only).
 
 typedef struct {

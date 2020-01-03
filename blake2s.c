@@ -113,12 +113,7 @@ static void blake2s_round(size_t r, const uint32_t m[16], uint32_t v[16]) {
 }
 
 static void blake2s_compress(blake2s_state *S, const uint8_t in[BLAKE2S_BLOCKBYTES]) {
-    #if !BLAKE2S_UNALIGNED
     const uint32_t *m = (const uint32_t*)in;
-    #else
-    uint32_t m[16];
-    memcpy(m, in, sizeof(m));
-    #endif
 
     uint32_t v[16];
     memcpy(v, S->h, 8 * sizeof(v[0]));

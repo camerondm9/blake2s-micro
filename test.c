@@ -28,11 +28,10 @@ const uint8_t data2[] = "The quick brown fox jumps over the lazy dog";
 void test(const uint8_t *data, size_t len) {
     unsigned char result[32];
 
-    int err = blake2s(result, (const uint32_t*)data, len);
-    if (err) {
-        printf("blake2s: error\n");
-        return;
-    }
+    blake2s_state S;
+    blake2s_init(&S);
+    blake2s_update(&S, data, len);
+    blake2s_final(&S, &result);
 
     for (size_t i = 0; i < sizeof(result); i++) {
         printf("%02x", result[i]);

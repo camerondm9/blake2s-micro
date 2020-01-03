@@ -31,7 +31,7 @@ extern "C" {
 //Except for BLAKE2S_OUTLEN, disabling features will improve code size.
 #define BLAKE2S_OUTLEN    (32)  //Length of digest (32 is the secure/maximum/standard length)
 #define BLAKE2S_64BIT     (0)   //Input length may be 4GB or larger (64-bit systems only).
-#define BLAKE2S_KEYED     (1)   //Support for keyed hashing
+#define BLAKE2S_KEYED     (0)   //Support for keyed hashing
 
 typedef struct {
     uint32_t h[8];

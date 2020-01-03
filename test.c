@@ -35,6 +35,7 @@ void test(const uint8_t *data, size_t len) {
     printf("\n");
 }
 
+#if BLAKE2S_KEYED
 void test_key(const uint8_t *key, size_t len_key, const uint8_t *data, size_t len_data) {
     unsigned char result[32];
 
@@ -48,6 +49,7 @@ void test_key(const uint8_t *key, size_t len_key, const uint8_t *data, size_t le
     }
     printf("\n");
 }
+#endif
 
 int main(int argc, char **argv) {
     if (argc > 1) {
@@ -63,6 +65,7 @@ int main(int argc, char **argv) {
                 test(buf, len);
                 free(buf);
             } else {
+                #if BLAKE2S_KEYED
                 //Replace colon with null to split the string
                 *colon++ = 0;
                 size_t len_key = strlen(argv[i]) / 2;
@@ -79,6 +82,9 @@ int main(int argc, char **argv) {
                 test_key(buf_key, len_key, buf_data, len_data);
                 free(buf_data);
                 free(buf_key);
+                #else
+                printf("skip: Keyed hash support disabled.\n");
+                #endif
             }
         }
     } else {

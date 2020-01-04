@@ -25,9 +25,17 @@ void test(const uint8_t *data, size_t len) {
     unsigned char result[32];
 
     blake2s_state S;
+    #if (BLAKE2S_OUTLEN == 0)
+    blake2s_init(&S, sizeof(result));
+    #else
     blake2s_init(&S);
+    #endif
     blake2s_update(&S, data, len);
+    #if (BLAKE2S_OUTLEN == 0)
+    blake2s_final(&S, &result, sizeof(result));
+    #else
     blake2s_final(&S, &result);
+    #endif
 
     for (size_t i = 0; i < sizeof(result); i++) {
         printf("%02x", result[i]);
@@ -40,9 +48,18 @@ void test_key(const uint8_t *key, size_t len_key, const uint8_t *data, size_t le
     unsigned char result[32];
 
     blake2s_state S;
+
+    #if (BLAKE2S_OUTLEN == 0)
+    blake2s_init_key(&S, sizeof(result), key, len_key);
+    #else
     blake2s_init_key(&S, key, len_key);
+    #endif
     blake2s_update(&S, data, len_data);
+    #if (BLAKE2S_OUTLEN == 0)
+    blake2s_final(&S, &result, sizeof(result));
+    #else
     blake2s_final(&S, &result);
+    #endif
 
     for (size_t i = 0; i < sizeof(result); i++) {
         printf("%02x", result[i]);

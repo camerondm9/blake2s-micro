@@ -43,20 +43,36 @@ static inline uint32_t rotr32(const uint32_t w, const unsigned c) {
 }
 
 //Blake2s initialization without key
-void blake2s_init(blake2s_state *S) {
+void blake2s_init(blake2s_state *S
+#if (BLAKE2S_OUTLEN == 0)
+, size_t outlen
+#endif
+) {
     //Clear state
     memset(S, 0, sizeof(blake2s_state));
     //Fill initialization vector
     memcpy(S->h, blake2s_IV, 8 * sizeof(S->h[0]));
     //Set depth, fanout and digest length
+    #if (BLAKE2S_OUTLEN == 0)
+    S->h[0] ^= (0x0101 << 16) | outlen;
+    #else
     S->h[0] ^= (1UL << 24) | (1UL << 16) | BLAKE2S_OUTLEN;
+    #endif
 }
 
 #if BLAKE2S_KEYED
 //Blake2s initialization with key (keylen must be > 0)
-void blake2s_init_key(blake2s_state *S, const void *key, size_t keylen) {
+void blake2s_init_key(blake2s_state *S
+#if (BLAKE2S_OUTLEN == 0)
+, size_t outlen
+#endif
+, const void *key, size_t keylen) {
     //Initialize without key
+    #if (BLAKE2S_OUTLEN == 0)
+    blake2s_init(S, outlen);
+    #else
     blake2s_init(S);
+    #endif
     //Set key length
     S->h[0] ^= (keylen << 8);
     //Process key data
@@ -142,7 +158,11 @@ void blake2s_update(blake2s_state *S, const void *in, size_t inlen) {
 }
 
 //Finalize and output hash (only call this once)
-void blake2s_final(blake2s_state *S, void *out) {
+void blake2s_final(blake2s_state *S, void *out
+#if (BLAKE2S_OUTLEN == 0)
+, size_t outlen
+#endif
+) {
     //Increase counter
     #if BLAKE2S_64BIT
     S->T += S->buflen;
@@ -155,5 +175,9 @@ void blake2s_final(blake2s_state *S, void *out) {
     S->f0 = (uint32_t)-1;
     blake2s_compress(S);
     //Copy output to user buffer
+    #if (BLAKE2S_OUTLEN == 0)
+    memcpy(out, S->h, outlen);
+    #else
     memcpy(out, S->h, BLAKE2S_OUTLEN);
+    #endif
 }

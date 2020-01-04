@@ -29,8 +29,8 @@ extern "C" {
 
 //Options that can be set depending on application needs.
 //Except for BLAKE2S_OUTLEN, disabling features will improve code size.
-#define BLAKE2S_OUTLEN    (32)  //Length of digest (32 is the secure/maximum/standard length)
-#define BLAKE2S_64BIT     (0)   //Input length may be 4GB or larger (64-bit systems only).
+#define BLAKE2S_OUTLEN    (32)  //Length of digest (32 is the secure/maximum/standard length). Setting this to zero switches the functions to expect an "outlen" parameter.
+#define BLAKE2S_64BIT     (0)   //Input length may be 4GB or larger
 #define BLAKE2S_KEYED     (0)   //Support for keyed hashing
 
 typedef struct {
@@ -45,13 +45,20 @@ typedef struct {
 } blake2s_state;
 
 //API. See the options above for the applicable restrictions.
-
+#if BLAKE2S_OUTLEN == 0
+void blake2s_init(blake2s_state *S, size_t outlen);
+#if BLAKE2S_KEYED
+void blake2s_init_key(blake2s_state *S, size_t outlen, const void *key, size_t keylen);
+#endif
+void blake2s_final(blake2s_state *S, void *out, size_t outlen);
+#else
 void blake2s_init(blake2s_state *S);
 #if BLAKE2S_KEYED
 void blake2s_init_key(blake2s_state *S, const void *key, size_t keylen);
 #endif
-void blake2s_update(blake2s_state *S, const void *in, size_t inlen);
 void blake2s_final(blake2s_state *S, void *out);
+#endif
+void blake2s_update(blake2s_state *S, const void *in, size_t inlen);
 
 #if defined(__cplusplus)
 }

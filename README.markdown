@@ -1,21 +1,16 @@
 # BLAKE2s for embedded devices
 
-This is a size-optimized implementation of the [BLAKE2s hash
-function](https://blake2.net/). With all optimizations/constraints enabled, it
-can archieve a code size of about 500 bytes.
+This is a size-optimized implementation of the [BLAKE2s hash function](https://blake2.net/).
+With all optimizations/constraints enabled, it can archieve a code size of about 500 bytes (600 bytes including constant tables).
 
-**Note**: although this implementation is based on the reference implementation
+**Note**: although this implementation is based on the [reference implementation](https://github.com/BLAKE2/BLAKE2/tree/master/ref)
 and it has been tested on all relevant test vectors, I cannot guarantee it will
 work in all cases as it has been modified quite a lot.
 
 Things that are different from the original reference implementation:
 
-  * By default, inputs are assumed to be aligned on word boundaries and the
-    output digest length is fixed at compile time. Also, by default the input
-    must be given in multiples of the block size (64 bytes). Most of these
-    changes can be disabled.
   * Unrolled loops are re-rolled to save code size.
-  * No support for keyed hashing or salting, yet. This is something that would
+  * No support for salting, yet. This is something that would
     be nice to have, if it can be disabled by default.
   * Code relies on modern features of C, to make it easier to read. We don't
     live in the 90's, so we can use variable declarations directly in a `for`
@@ -37,14 +32,16 @@ Usage is simple:
 #include "blake2s.h"
 
 // this is the message to be hashed
-__attribute__((aligned(4)))
-const uint8_t data[BLAKE2S_BLOCKBYTES] = {0, 1, 2, 3}; // block length must be > 0 and a multiple of 64
+const uint8_t data[BLAKE2S_BLOCKBYTES] = {0, 1, 2, 3};
 
 void main() {
     uint8_t result[32];
 
     // hash the data
-    blake2s(result, data, sizeof(data));
+    blake2s_state S;
+    blake2s_init(&S);
+    blake2s_update(&S, data, sizeof(data));
+    blake2s_final(&S, &result);
 
     // do something with the result
     for (size_t i = 0; i < sizeof(result); i++) {
@@ -60,25 +57,23 @@ void main() {
 The primary goal of this library is small size, but I've also done some
 performance testing.
 
+| System    | Optimization level | code size | constant data size | kB/s         |
+| --------- | ------------------ | --------- | ------------------ | ------------ |
+| Cortex-M0 | `gcc -Os`          | 470 bytes | 112 bytes          | ?            |
+| Cortex-M4 | `gcc -Os`          | 502 bytes | 112 bytes          | ?            |
 
-| System    | Optimization level | size (bytes) | kB/s         |
-| --------- | ------------------ | ------------ | ------------ |
-| Cortex-M0 | GCC: `-Os -flto`   | 498          | ?            |
-| Cortex-M4 | GCC: `-Os -flto`   | 550          | ~500 (64MHz) |
+Computing a hash also requires allocating a `blake2s_state` structure, which is 112 bytes in size.
 
 
 ## Options
 
-There are several options in blake2s.h with feature/codesize tradeoffs:
+There are a few options in blake2s.h with feature/codesize tradeoffs:
 
-| Option              | Effect |
-| ------------------- | ------ |
-| `BLAKE2S_OUTLEN`    | The digest length, usually 32. |
-| `BLAKE2S_STREAM`    | Allow non-block-sized inputs. When this is disabled, the
-length passed to `blake2s()` must be a non-zero multiple of 64. |
-| `BLAKE2S_ERRCHECK`  | Check and return an error on invalid parameters. It is a programming error (invalid parameter) if an error is returned - for example passing NULL as output. |
-| `BLAKE2S_UNALIGNED` | Allow unaligned inputs. Processors that require aligned reads (most 32-bit microcontrollers, few high-end CPUs) will choke when this option is disabled and unaligned input data is passed to `blake2s()`. |
-| `BLAKE2S_64BIT`     | Allow the total length of the hashed data to be larger than 4GB. This is only relevant on 64-bit processors. |
+| Option              | Effect                                                                                        |
+| ------------------- | --------------------------------------------------------------------------------------------- |
+| `BLAKE2S_OUTLEN`    | The digest length, usually 32. If set to 0, the functions will require an `outlen` parameter. |
+| `BLAKE2S_64BIT`     | Allow the total length of the hashed data to be larger than 4GB.                              |
+| `BLAKE2S_KEYED`     | Enable support for keyed initialization of the hash.                                          |
 
 
 ## TODO

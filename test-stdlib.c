@@ -1,7 +1,8 @@
-//  BLAKE2 - size-optimized implementations
+//  BLAKE2 - size-optimized implementation
 //
 //  Copyright 2012, Samuel Neves <sneves@dei.uc.pt> (original work)
 //  Copyright 2018, Ayke van Laethem
+//  Copyright 2020, Cameron Martens
 //
 //  You may use this under the terms of the CC0, the OpenSSL Licence, or
 //  the Apache Public License 2.0, at your option. The terms of these
@@ -12,7 +13,7 @@
 //  - Apache 2.0        : http://www.apache.org/licenses/LICENSE-2.0
 //
 //  More information about the BLAKE2 hash function can be found at
-//  https://blake2.net.
+//  https://blake2.net
 
 #include <string.h>
 

@@ -1,7 +1,7 @@
 # BLAKE2s for embedded devices
 
 This is a size-optimized implementation of the [BLAKE2s hash function](https://blake2.net/).
-With all optimizations/constraints enabled, it can archieve a code size of about 500 bytes (600 bytes including constant tables).
+With all optimizations/constraints enabled, it can achieve a code size of about 500 bytes (600 bytes including constant tables).
 
 **Note**: although this implementation is based on the [reference implementation](https://github.com/BLAKE2/BLAKE2/tree/master/ref)
 and it has been tested on all relevant test vectors, I cannot guarantee it will
@@ -54,15 +54,17 @@ void main() {
 
 ## Performance
 
-The primary goal of this library is small size, but I've also done some
-performance testing.
+The primary goal of this library is small size, but I've also done some performance testing.
 
 | System    | Optimization level | code size | constant data size | kB/s         |
 | --------- | ------------------ | --------- | ------------------ | ------------ |
-| Cortex-M0 | `gcc -Os`          | 470 bytes | 112 bytes          | ?            |
-| Cortex-M4 | `gcc -Os`          | 502 bytes | 112 bytes          | ?            |
+| Cortex-M0 | `gcc -Os`          | 466 bytes | 112 bytes          | ?            |
+| Cortex-M4 | `gcc -Os`          | 498 bytes | 112 bytes          | ?            |
 
-Computing a hash also requires allocating a `blake2s_state` structure, which is 112 bytes in size.
+Minimum code size is listed (all options disabled and a fixed output length).
+Code size includes stdlib dependencies (`memset` and `memcpy`, roughly 32 bytes). These aren't necessary if your project already has them.
+
+Computing a hash also requires allocating a writable `blake2s_state` structure, which is 112 bytes in size.
 
 
 ## Options
